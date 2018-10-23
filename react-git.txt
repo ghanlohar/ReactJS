@@ -1,0 +1,22 @@
+git remote add origin https://github.com/ghanlohar/ReactJS-Remote.git
+
+git remote add origin https://github.com/ghanlohar/ReactJS-Daily.git
+
+Deploy app on Git Pages
+-----------------------------
+
+1. git init in local app folder
+
+2. git remote add origin https://github.com/ghanlohar/ReactJS-Remote.git
+
+3. npm run deploy
+
+-------------------------------------------
+
+debugging react app:
+----------------------------------
+install chrome debugger ext.
+CTRL+SHIFT+d - -- debugger tab
+gear btn - package.json
+
+
