@@ -28,5 +28,5 @@ Section: Configure the Chrome debugger
 
 Linting
 =======================
-Linters analyze your source code and can warn you about potential problems before you run your application.\\n
+Linters analyze your source code and can warn you about potential problems before you run your application.
 Linters can provide more sophisticated analysis, enforcing coding conventions and detecting anti-patterns.
