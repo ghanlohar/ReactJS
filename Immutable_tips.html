@@ -1,0 +1,243 @@
+<div class="text-viewer--content--3hoqQ"><div class="a1 mb-space-md">Immutable Update Patterns</div><div class="asset-container"><div class="article-asset--article-content--1MwHd"><p>Immutable Update Patterns on reduxjs.org:&nbsp;<a href="http://redux.js.org/docs/recipes/reducers/ImmutableUpdatePatterns.html" rel="nofollow" target="_blank">http://redux.js.org/docs/recipes/reducers/ImmutableUpdatePatterns.html</a></p>
+
+<h4>Updating Nested Objects</h4>
+
+
+
+<p>The key to updating nested data is&nbsp;<strong>that&nbsp;<em>every</em>&nbsp;level of nesting must be copied and updated appropriately</strong>. This is often a difficult concept for those learning Redux, and there are some specific problems that frequently occur when trying to update nested objects. These lead to accidental direct mutation, and should be avoided.</p>
+
+
+
+
+
+<h5>Common Mistake #1: New variables that point to the same objects</h5>
+
+
+
+
+
+<p>Defining a new variable does&nbsp;<em>not</em>&nbsp;create a new actual object - it only creates another reference to the same object. An example of this error would be:</p>
+
+
+
+
+
+<div class="ud-component--base-components--code-block" ng-non-bindable=""><div><pre class="prettyprint linenums prettyprinted" role="presentation" style=""><ol class="linenums"><li class="L0"><span class="kwd">function</span><span class="pln"> updateNestedState</span><span class="pun">(</span><span class="pln">state</span><span class="pun">,</span><span class="pln"> action</span><span class="pun">)</span><span class="pln"> </span><span class="pun">{</span></li><li class="L1"><span class="pln">    </span><span class="kwd">let</span><span class="pln"> nestedState </span><span class="pun">=</span><span class="pln"> state</span><span class="pun">.</span><span class="pln">nestedState</span><span class="pun">;</span></li><li class="L2"><span class="pln">    </span><span class="com">// ERROR: this directly modifies the existing object reference - don't do this!</span></li><li class="L3"><span class="pln">    nestedState</span><span class="pun">.</span><span class="pln">nestedField </span><span class="pun">=</span><span class="pln"> action</span><span class="pun">.</span><span class="pln">data</span><span class="pun">;</span></li><li class="L4"><span class="pln">&nbsp;</span></li><li class="L5"><span class="pln">    </span><span class="kwd">return</span><span class="pln"> </span><span class="pun">{</span></li><li class="L6"><span class="pln">        </span><span class="pun">...</span><span class="pln">state</span><span class="pun">,</span></li><li class="L7"><span class="pln">        nestedState</span></li><li class="L8"><span class="pln">    </span><span class="pun">};</span></li><li class="L9"><span class="pun">}</span></li></ol></pre></div></div>
+
+
+
+
+
+
+
+
+
+<p>This function does correctly return a shallow copy of the top-level state object, but because the&nbsp;<code>nestedState</code>&nbsp;variable was still pointing at the existing object, the state was directly mutated.</p>
+
+
+
+
+
+<h5>Common Mistake #2: Only making a shallow copy of one level</h5>
+
+
+
+
+
+<p>Another common version of this error looks like this:</p>
+
+
+
+
+
+<div class="ud-component--base-components--code-block" ng-non-bindable=""><div><pre class="prettyprint linenums prettyprinted" role="presentation" style=""><ol class="linenums"><li class="L0"><span class="kwd">function</span><span class="pln"> updateNestedState</span><span class="pun">(</span><span class="pln">state</span><span class="pun">,</span><span class="pln"> action</span><span class="pun">)</span><span class="pln"> </span><span class="pun">{</span></li><li class="L1"><span class="pln">    </span><span class="com">// Problem: this only does a shallow copy!</span></li><li class="L2"><span class="pln">    </span><span class="kwd">let</span><span class="pln"> newState </span><span class="pun">=</span><span class="pln"> </span><span class="pun">{...</span><span class="pln">state</span><span class="pun">};</span></li><li class="L3"><span class="pln">&nbsp;</span></li><li class="L4"><span class="pln">    </span><span class="com">// ERROR: nestedState is still the same object!</span></li><li class="L5"><span class="pln">    newState</span><span class="pun">.</span><span class="pln">nestedState</span><span class="pun">.</span><span class="pln">nestedField </span><span class="pun">=</span><span class="pln"> action</span><span class="pun">.</span><span class="pln">data</span><span class="pun">;</span></li><li class="L6"><span class="pln">&nbsp;</span></li><li class="L7"><span class="pln">    </span><span class="kwd">return</span><span class="pln"> newState</span><span class="pun">;</span></li><li class="L8"><span class="pun">}</span></li></ol></pre></div></div>
+
+
+
+
+
+
+
+
+
+
+
+<p>Doing a shallow copy of the top level is&nbsp;<em>not</em>&nbsp;sufficient - the&nbsp;<code>nestedState</code>&nbsp;object should be copied as well.</p>
+
+
+
+
+
+<h5>Correct Approach: Copying All Levels of Nested Data</h5>
+
+
+
+
+
+<p>Unfortunately, the process of correctly applying immutable updates to deeply nested state can easily become verbose and hard to read. Here's what an example of updating&nbsp;<code>state.first.second[someId].fourth</code>&nbsp;might look like:</p>
+
+
+
+
+
+<div class="ud-component--base-components--code-block" ng-non-bindable=""><div><pre class="prettyprint linenums prettyprinted" role="presentation" style=""><ol class="linenums"><li class="L0"><span class="kwd">function</span><span class="pln"> updateVeryNestedField</span><span class="pun">(</span><span class="pln">state</span><span class="pun">,</span><span class="pln"> action</span><span class="pun">)</span><span class="pln"> </span><span class="pun">{</span></li><li class="L1"><span class="pln">    </span><span class="kwd">return</span><span class="pln"> </span><span class="pun">{</span></li><li class="L2"><span class="pln">        </span><span class="pun">...</span><span class="pln">state</span><span class="pun">,</span></li><li class="L3"><span class="pln">        first </span><span class="pun">:</span><span class="pln"> </span><span class="pun">{</span></li><li class="L4"><span class="pln">            </span><span class="pun">...</span><span class="pln">state</span><span class="pun">.</span><span class="pln">first</span><span class="pun">,</span></li><li class="L5"><span class="pln">            second </span><span class="pun">:</span><span class="pln"> </span><span class="pun">{</span></li><li class="L6"><span class="pln">                </span><span class="pun">...</span><span class="pln">state</span><span class="pun">.</span><span class="pln">first</span><span class="pun">.</span><span class="pln">second</span><span class="pun">,</span></li><li class="L7"><span class="pln">                </span><span class="pun">[</span><span class="pln">action</span><span class="pun">.</span><span class="pln">someId</span><span class="pun">]</span><span class="pln"> </span><span class="pun">:</span><span class="pln"> </span><span class="pun">{</span></li><li class="L8"><span class="pln">                    </span><span class="pun">...</span><span class="pln">state</span><span class="pun">.</span><span class="pln">first</span><span class="pun">.</span><span class="pln">second</span><span class="pun">[</span><span class="pln">action</span><span class="pun">.</span><span class="pln">someId</span><span class="pun">],</span></li><li class="L9"><span class="pln">                    fourth </span><span class="pun">:</span><span class="pln"> action</span><span class="pun">.</span><span class="pln">someValue</span></li><li class="L0"><span class="pln">                </span><span class="pun">}</span></li><li class="L1"><span class="pln">            </span><span class="pun">}</span></li><li class="L2"><span class="pln">        </span><span class="pun">}</span></li><li class="L3"><span class="pln">    </span><span class="pun">}</span></li><li class="L4"><span class="pun">}</span></li></ol></pre></div></div>
+
+
+
+
+
+
+
+
+
+
+
+<p>Obviously, each layer of nesting makes this harder to read, and gives more chances to make mistakes. This is one of several reasons why you are encouraged to keep your state flattened, and compose reducers as much as possible.</p>
+
+
+
+
+
+<h4>Inserting and Removing Items in Arrays</h4>
+
+
+
+
+
+<p>Normally, a Javascript array's contents are modified using mutative functions like&nbsp;<code>push</code>,&nbsp;<code>unshift</code>, and&nbsp;<code>splice</code>. Since we don't want to mutate state directly in reducers, those should normally be avoided. Because of that, you might see "insert" or "remove" behavior written like this:</p>
+
+
+
+
+
+<div class="ud-component--base-components--code-block" ng-non-bindable=""><div><pre class="prettyprint linenums prettyprinted" role="presentation" style=""><ol class="linenums"><li class="L0"><span class="kwd">function</span><span class="pln"> insertItem</span><span class="pun">(</span><span class="pln">array</span><span class="pun">,</span><span class="pln"> action</span><span class="pun">)</span><span class="pln"> </span><span class="pun">{</span></li><li class="L1"><span class="pln">    </span><span class="kwd">return</span><span class="pln"> </span><span class="pun">[</span></li><li class="L2"><span class="pln">        </span><span class="pun">...</span><span class="pln">array</span><span class="pun">.</span><span class="pln">slice</span><span class="pun">(</span><span class="lit">0</span><span class="pun">,</span><span class="pln"> action</span><span class="pun">.</span><span class="pln">index</span><span class="pun">),</span></li><li class="L3"><span class="pln">        action</span><span class="pun">.</span><span class="pln">item</span><span class="pun">,</span></li><li class="L4"><span class="pln">        </span><span class="pun">...</span><span class="pln">array</span><span class="pun">.</span><span class="pln">slice</span><span class="pun">(</span><span class="pln">action</span><span class="pun">.</span><span class="pln">index</span><span class="pun">)</span></li><li class="L5"><span class="pln">    </span><span class="pun">]</span></li><li class="L6"><span class="pun">}</span></li><li class="L7"><span class="pln">&nbsp;</span></li><li class="L8"><span class="kwd">function</span><span class="pln"> removeItem</span><span class="pun">(</span><span class="pln">array</span><span class="pun">,</span><span class="pln"> action</span><span class="pun">)</span><span class="pln"> </span><span class="pun">{</span></li><li class="L9"><span class="pln">    </span><span class="kwd">return</span><span class="pln"> </span><span class="pun">[</span></li><li class="L0"><span class="pln">        </span><span class="pun">...</span><span class="pln">array</span><span class="pun">.</span><span class="pln">slice</span><span class="pun">(</span><span class="lit">0</span><span class="pun">,</span><span class="pln"> action</span><span class="pun">.</span><span class="pln">index</span><span class="pun">),</span></li><li class="L1"><span class="pln">        </span><span class="pun">...</span><span class="pln">array</span><span class="pun">.</span><span class="pln">slice</span><span class="pun">(</span><span class="pln">action</span><span class="pun">.</span><span class="pln">index </span><span class="pun">+</span><span class="pln"> </span><span class="lit">1</span><span class="pun">)</span></li><li class="L2"><span class="pln">    </span><span class="pun">];</span></li><li class="L3"><span class="pun">}</span></li></ol></pre></div></div>
+
+
+
+
+
+
+
+
+
+
+
+<p>However, remember that the key is that the&nbsp;<em>original in-memory reference</em>&nbsp;is not modified.&nbsp;<strong>As long as we make a copy first, we can safely mutate the copy</strong>. Note that this is true for both arrays and objects, but nested values still must be updated using the same rules.</p>
+
+
+
+
+
+<p>This means that we could also write the insert and remove functions like this:</p>
+
+
+
+
+
+<div class="ud-component--base-components--code-block" ng-non-bindable=""><div><pre class="prettyprint linenums prettyprinted" role="presentation" style=""><ol class="linenums"><li class="L0"><span class="kwd">function</span><span class="pln"> insertItem</span><span class="pun">(</span><span class="pln">array</span><span class="pun">,</span><span class="pln"> action</span><span class="pun">)</span><span class="pln"> </span><span class="pun">{</span></li><li class="L1"><span class="pln">    </span><span class="kwd">let</span><span class="pln"> newArray </span><span class="pun">=</span><span class="pln"> array</span><span class="pun">.</span><span class="pln">slice</span><span class="pun">();</span></li><li class="L2"><span class="pln">    newArray</span><span class="pun">.</span><span class="pln">splice</span><span class="pun">(</span><span class="pln">action</span><span class="pun">.</span><span class="pln">index</span><span class="pun">,</span><span class="pln"> </span><span class="lit">0</span><span class="pun">,</span><span class="pln"> action</span><span class="pun">.</span><span class="pln">item</span><span class="pun">);</span></li><li class="L3"><span class="pln">    </span><span class="kwd">return</span><span class="pln"> newArray</span><span class="pun">;</span></li><li class="L4"><span class="pun">}</span></li><li class="L5"><span class="pln">&nbsp;</span></li><li class="L6"><span class="kwd">function</span><span class="pln"> removeItem</span><span class="pun">(</span><span class="pln">array</span><span class="pun">,</span><span class="pln"> action</span><span class="pun">)</span><span class="pln"> </span><span class="pun">{</span></li><li class="L7"><span class="pln">    </span><span class="kwd">let</span><span class="pln"> newArray </span><span class="pun">=</span><span class="pln"> array</span><span class="pun">.</span><span class="pln">slice</span><span class="pun">();</span></li><li class="L8"><span class="pln">    newArray</span><span class="pun">.</span><span class="pln">splice</span><span class="pun">(</span><span class="pln">action</span><span class="pun">.</span><span class="pln">index</span><span class="pun">,</span><span class="pln"> </span><span class="lit">1</span><span class="pun">);</span></li><li class="L9"><span class="pln">    </span><span class="kwd">return</span><span class="pln"> newArray</span><span class="pun">;</span></li><li class="L0"><span class="pun">}</span></li></ol></pre></div></div>
+
+
+
+
+
+
+
+
+
+
+
+<p>The remove function could also be implemented as:</p>
+
+
+
+
+
+<div class="ud-component--base-components--code-block" ng-non-bindable=""><div><pre class="prettyprint linenums prettyprinted" role="presentation" style=""><ol class="linenums"><li class="L0"><span class="kwd">function</span><span class="pln"> removeItem</span><span class="pun">(</span><span class="pln">array</span><span class="pun">,</span><span class="pln"> action</span><span class="pun">)</span><span class="pln"> </span><span class="pun">{</span></li><li class="L1"><span class="pln">    </span><span class="kwd">return</span><span class="pln"> array</span><span class="pun">.</span><span class="pln">filter</span><span class="pun">(</span><span class="pln"> </span><span class="pun">(</span><span class="pln">item</span><span class="pun">,</span><span class="pln"> index</span><span class="pun">)</span><span class="pln"> </span><span class="pun">=&gt;</span><span class="pln"> index </span><span class="pun">!==</span><span class="pln"> action</span><span class="pun">.</span><span class="pln">index</span><span class="pun">);</span></li><li class="L2"><span class="pun">}</span></li></ol></pre></div></div>
+
+
+
+
+
+
+
+
+
+
+
+<h4>Updating an Item in an Array</h4>
+
+
+
+
+
+<p>Updating one item in an array can be accomplished by using&nbsp;<code>Array.map</code>, returning a new value for the item we want to update, and returning the existing values for all other items:</p>
+
+
+
+
+
+<div class="ud-component--base-components--code-block" ng-non-bindable=""><div><pre class="prettyprint linenums prettyprinted" role="presentation" style=""><ol class="linenums"><li class="L0"><span class="kwd">function</span><span class="pln"> updateObjectInArray</span><span class="pun">(</span><span class="pln">array</span><span class="pun">,</span><span class="pln"> action</span><span class="pun">)</span><span class="pln"> </span><span class="pun">{</span></li><li class="L1"><span class="pln">    </span><span class="kwd">return</span><span class="pln"> array</span><span class="pun">.</span><span class="pln">map</span><span class="pun">(</span><span class="pln"> </span><span class="pun">(</span><span class="pln">item</span><span class="pun">,</span><span class="pln"> index</span><span class="pun">)</span><span class="pln"> </span><span class="pun">=&gt;</span><span class="pln"> </span><span class="pun">{</span></li><li class="L2"><span class="pln">        </span><span class="kwd">if</span><span class="pun">(</span><span class="pln">index </span><span class="pun">!==</span><span class="pln"> action</span><span class="pun">.</span><span class="pln">index</span><span class="pun">)</span><span class="pln"> </span><span class="pun">{</span></li><li class="L3"><span class="pln">            </span><span class="com">// This isn't the item we care about - keep it as-is</span></li><li class="L4"><span class="pln">            </span><span class="kwd">return</span><span class="pln"> item</span><span class="pun">;</span></li><li class="L5"><span class="pln">        </span><span class="pun">}</span></li><li class="L6"><span class="pln">&nbsp;</span></li><li class="L7"><span class="pln">        </span><span class="com">// Otherwise, this is the one we want - return an updated value</span></li><li class="L8"><span class="pln">        </span><span class="kwd">return</span><span class="pln"> </span><span class="pun">{</span></li><li class="L9"><span class="pln">            </span><span class="pun">...</span><span class="pln">item</span><span class="pun">,</span></li><li class="L0"><span class="pln">            </span><span class="pun">...</span><span class="pln">action</span><span class="pun">.</span><span class="pln">item</span></li><li class="L1"><span class="pln">        </span><span class="pun">};</span><span class="pln">    </span></li><li class="L2"><span class="pln">    </span><span class="pun">});</span></li><li class="L3"><span class="pun">}</span></li></ol></pre></div></div>
+
+
+
+
+
+
+
+
+
+
+
+<h4>Immutable Update Utility Libraries</h4>
+
+
+
+
+
+<p>Because writing immutable update code can become tedious, there are a number of utility libraries that try to abstract out the process. These libraries vary in APIs and usage, but all try to provide a shorter and more succinct way of writing these updates. Some, like&nbsp;<a href="https://github.com/debitoor/dot-prop-immutable" rel="nofollow" target="_blank">dot-prop-immutable</a>, take string paths for commands:</p>
+
+
+
+
+
+<div class="ud-component--base-components--code-block" ng-non-bindable=""><div><pre class="prettyprint linenums prettyprinted" role="presentation" style=""><ol class="linenums"><li class="L0"><span class="pln">state </span><span class="pun">=</span><span class="pln"> dotProp</span><span class="pun">.</span><span class="kwd">set</span><span class="pun">(</span><span class="pln">state</span><span class="pun">,</span><span class="pln"> </span><span class="str">`todos.${index}.complete`</span><span class="pun">,</span><span class="pln"> </span><span class="kwd">true</span><span class="pun">)</span></li></ol></pre></div></div>
+
+
+
+
+
+
+
+
+
+
+
+<p>Others, like&nbsp;<a href="https://github.com/kolodny/immutability-helper" rel="nofollow" target="_blank">immutability-helper</a>&nbsp;(a fork of the now-deprecated React Immutability Helpers addon), use nested values and helper functions:</p>
+
+
+
+
+
+<div class="ud-component--base-components--code-block" ng-non-bindable=""><div><pre class="prettyprint linenums prettyprinted" role="presentation" style=""><ol class="linenums"><li class="L0"><span class="kwd">var</span><span class="pln"> collection </span><span class="pun">=</span><span class="pln"> </span><span class="pun">[</span><span class="lit">1</span><span class="pun">,</span><span class="pln"> </span><span class="lit">2</span><span class="pun">,</span><span class="pln"> </span><span class="pun">{</span><span class="pln">a</span><span class="pun">:</span><span class="pln"> </span><span class="pun">[</span><span class="lit">12</span><span class="pun">,</span><span class="pln"> </span><span class="lit">17</span><span class="pun">,</span><span class="pln"> </span><span class="lit">15</span><span class="pun">]}];</span></li><li class="L1"><span class="kwd">var</span><span class="pln"> newCollection </span><span class="pun">=</span><span class="pln"> update</span><span class="pun">(</span><span class="pln">collection</span><span class="pun">,</span><span class="pln"> </span><span class="pun">{</span><span class="lit">2</span><span class="pun">:</span><span class="pln"> </span><span class="pun">{</span><span class="pln">a</span><span class="pun">:</span><span class="pln"> </span><span class="pun">{</span><span class="pln">$splice</span><span class="pun">:</span><span class="pln"> </span><span class="pun">[[</span><span class="lit">1</span><span class="pun">,</span><span class="pln"> </span><span class="lit">1</span><span class="pun">,</span><span class="pln"> </span><span class="lit">13</span><span class="pun">,</span><span class="pln"> </span><span class="lit">14</span><span class="pun">]]}}});</span></li></ol></pre></div></div>
+
+
+
+
+
+
+
+
+
+
+
+<p>They can provide a useful alternative to writing manual immutable update logic.</p>
+
+
+
+
+
+<p><a href="https://github.com/markerikson/redux-ecosystem-links/blob/master/immutable-data.md#immutable-update-utilities" rel="nofollow" target="_blank">Immutable Data#Immutable Update Utilities</a>&nbsp;section of the&nbsp;<a href="https://github.com/markerikson/redux-ecosystem-links" rel="nofollow" target="_blank">Redux Addons Catalog</a>.<br></p>
+
+
+
+<p><br></p></div></div><div class="mt-space-sm"></div></div>
